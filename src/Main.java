@@ -1,5 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
@@ -28,12 +30,12 @@ public class Main {
         }
 
         if(threadsNum == 1) {
-            singleThreadPrcessing(fileSetOne, fileSetTwo);
+            singleThreadProcessing(fileSetOne, fileSetTwo);
             return;
         }
     }
 
-    private static void singleThreadPrcessing(File[] fSetFirst, File[] fSetSecond) {
+    private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
         Map<String, List<String>> invertedIndex = new HashMap<>();
         Scanner scan;
 
@@ -46,7 +48,7 @@ public class Main {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>", "")
+                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
@@ -56,7 +58,7 @@ public class Main {
                     String prev = "";
                     while(words.size() != 0) {
                         String word = words.poll();
-                        if(word.compareTo(prev) == 0) {
+                        if(word.compareTo(prev) == 0 || word.length() == 1) {
                             continue;
                         }
 
@@ -80,7 +82,7 @@ public class Main {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>", "")
+                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
@@ -90,7 +92,7 @@ public class Main {
                     String prev = "";
                     while(words.size() != 0) {
                         String word = words.poll();
-                        if(word.compareTo(prev) == 0) {
+                        if(word.compareTo(prev) == 0 || word.length() == 1) {
                             continue;
                         }
 
@@ -105,20 +107,31 @@ public class Main {
                     }
                 }
             }
-
-            for(Map.Entry<String, List<String>> couple : invertedIndex.entrySet()) {
-                System.out.print(couple.getKey() + " -> ");
-                for(String fName : couple.getValue()) {
-                    System.out.print(fName + " ");
-                }
-                System.out.println();
-            }
-
             System.out.println("Inverted index has been successfully built!");
             System.out.println("The size of inverted index is: " + invertedIndex.size());
+
+            scan = new Scanner(System.in);
+            System.out.println("Enter the name of the file for saving the index: ");
+            String fileName = scan.nextLine();
+
+            FileWriter fw = new FileWriter("files//" + fileName + ".txt");
+            for(Map.Entry<String, List<String>> couple : invertedIndex.entrySet()) {
+                String line = couple.getKey() + ": ";
+                for(String fName : couple.getValue()) {
+                    line = line + fName + "  ";
+                }
+                fw.write(line + "\n");
+                fw.flush();
+            }
+            System.out.println("The inverted index has been successfully written to the file!");
+
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
+        } catch (IOException ex) {
+            System.out.println("Something wrong with writing the file!");
+            ex.printStackTrace();
         }
+
 
     }
 }
