@@ -11,12 +11,12 @@ public class Main {
         File secondDir = new File("files//train");
 
         File[] fileSetOne = firstDir.listFiles();
-        File[] fileSetTwo= secondDir.listFiles();
+        File[] fileSetTwo = secondDir.listFiles();
 
         Scanner scan = new Scanner(System.in);
         System.out.println("Enter the num of threads (from 1 to 100) or 0 to exit: ");
 
-        int threadsNum = 0;
+        int threadsNum;
         while(true) {
             String input = scan.next();
             if(input.matches("\\d+")) {
@@ -32,6 +32,8 @@ public class Main {
         if(threadsNum == 1) {
             singleThreadProcessing(fileSetOne, fileSetTwo);
             return;
+        } else {
+            System.out.println("Multithreading is in development!");
         }
     }
 
