@@ -116,7 +116,6 @@ public class Main {
 
             System.out.println("Inverted index has been successfully built!");
             System.out.println("The size of inverted index is: " + invertedIndex.size());
-
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
         }
