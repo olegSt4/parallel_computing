@@ -34,8 +34,29 @@ public class Main {
             return;
         }
 
+        Thread[] threads = new Thread[threadsNum];
+        Result[] results = new Result[threadsNum];
+        for(int i = 0; i < threadsNum; i++) {
+            Result res = new Result(i);
 
+            int startIndexOne = fileSetOne.length/threadsNum*i;
+            int endIndexOne = i == threadsNum - 1 ? fileSetOne.length : fileSetOne.length/threadsNum*(i+1);
+            int startIndexTwo = fileSetTwo.length/threadsNum*i;
+            int endIndexTwo = i == threadsNum - 1 ? fileSetTwo.length : fileSetTwo.length/threadsNum*(i+1);
 
+            IndexBuilder newThread = new IndexBuilder(fileSetOne, fileSetTwo, startIndexOne, endIndexOne, startIndexTwo, endIndexTwo, res, i);
+            threads[i] = newThread;
+            results[i] = res;
+            newThread.run();
+        }
+
+        try {
+            for (int i = 0; i < threadsNum; i++) {
+                threads[i].join();
+            }
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
