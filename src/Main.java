@@ -76,7 +76,7 @@ public class Main {
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
-        Map<String, List<String>> invertedIndex = new HashMap<>();
+        Map<String, PriorityQueue<String>> invertedIndex = new HashMap<>();
         Scanner scan;
 
         try {
@@ -105,7 +105,7 @@ public class Main {
                         if(invertedIndex.containsKey(word)) {
                             invertedIndex.get(word).add("1:" + fileName);
                         } else {
-                            List<String> newList = new LinkedList<>();
+                            PriorityQueue<String> newList = new PriorityQueue<>();
                             newList.add("1:" + fileName);
                             invertedIndex.put(word, newList);
                         }
@@ -139,7 +139,7 @@ public class Main {
                         if(invertedIndex.containsKey(word)) {
                             invertedIndex.get(word).add("2:" + fileName);
                         } else {
-                            List<String> newList = new LinkedList<>();
+                            PriorityQueue<String> newList = new PriorityQueue<>();
                             newList.add("2:" + fileName);
                             invertedIndex.put(word, newList);
                         }
@@ -155,7 +155,7 @@ public class Main {
             String fileName = scan.nextLine();
 
             FileWriter fw = new FileWriter("files//" + fileName + ".txt");
-            for(Map.Entry<String, List<String>> couple : invertedIndex.entrySet()) {
+            for(Map.Entry<String, PriorityQueue<String>> couple : invertedIndex.entrySet()) {
                 String line = couple.getKey() + ": ";
                 for(String fName : couple.getValue()) {
                     line = line + fName + "  ";
