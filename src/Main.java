@@ -32,9 +32,10 @@ public class Main {
         if(threadsNum == 1) {
             singleThreadProcessing(fileSetOne, fileSetTwo);
             return;
-        } else {
-            System.out.println("Multithreading is in development!");
         }
+
+
+
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
