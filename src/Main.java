@@ -71,8 +71,9 @@ public class Main {
             IndexItem nextItem = results[trace].getNextItem();
             if(nextItem != null) addingQueue.add(nextItem);
         }
-
         System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
+
+        writeIndexToTheFile(finalIndex);
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
@@ -150,20 +151,7 @@ public class Main {
             System.out.println("Inverted index has been successfully built!");
             System.out.println("The size of inverted index is: " + invertedIndex.size());
 
-            scan = new Scanner(System.in);
-            System.out.println("Enter the name of the file for saving the index: ");
-            String fileName = scan.nextLine();
-
-            FileWriter fw = new FileWriter("files//" + fileName + ".txt");
-            for(Map.Entry<String, PriorityQueue<String>> couple : invertedIndex.entrySet()) {
-                String line = couple.getKey() + ": ";
-                for(String fName : couple.getValue()) {
-                    line = line + fName + "  ";
-                }
-                fw.write(line + "\n");
-                fw.flush();
-            }
-            System.out.println("The inverted index has been successfully written to the file!");
+            writeIndexToTheFile(invertedIndex);
 
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
@@ -184,5 +172,25 @@ public class Main {
         }
 
         return item.getId();
+    }
+
+    private static void writeIndexToTheFile(Map<String, PriorityQueue<String>> invertedIndex) {
+        Scanner scan = new Scanner(System.in);
+        System.out.println("Enter the name of the file for saving the index: ");
+        String fileName = scan.nextLine();
+        try {
+            FileWriter fw = new FileWriter("files//" + fileName + ".txt");
+            for(Map.Entry<String, PriorityQueue<String>> couple : invertedIndex.entrySet()) {
+                String line = couple.getKey() + ": ";
+                for(String fName : couple.getValue()) {
+                    line = line + fName + "  ";
+                }
+                fw.write(line + "\n");
+                fw.flush();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        System.out.println("The inverted index has been successfully written to the file!");
     }
 }
