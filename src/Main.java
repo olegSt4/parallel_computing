@@ -57,6 +57,22 @@ public class Main {
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
+
+        HashMap<String, PriorityQueue<String>> finalIndex = new HashMap<>();
+        Queue<IndexItem> addingQueue = new PriorityQueue<>();
+
+        for(int i = 0; i < threadsNum; i++) {
+            addingQueue.add(results[i].getNextItem());
+        }
+
+        while(addingQueue.size() != 0) {
+            int trace = addItemToIndex(finalIndex, addingQueue.poll());
+
+            IndexItem nextItem = results[trace].getNextItem();
+            if(nextItem != null) addingQueue.add(nextItem);
+        }
+
+        System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
@@ -157,5 +173,16 @@ public class Main {
         }
 
 
+    }
+
+    private static int addItemToIndex(HashMap<String, PriorityQueue<String>> index, IndexItem item) {
+        if(index.containsKey(item.getWord())) {
+            index.get(item.getWord()).addAll(item.getIndex());
+        } else {
+            PriorityQueue<String> newBlockIndex = new PriorityQueue<>(item.getIndex());
+            index.put(item.getWord(), newBlockIndex);
+        }
+
+        return item.getId();
     }
 }
