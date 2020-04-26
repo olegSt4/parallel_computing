@@ -1,6 +1,6 @@
 import java.util.List;
 
-public class IndexItem {
+public class IndexItem implements Comparable<IndexItem>{
     private String word;
     private List<String> index;
     private int id;
@@ -21,5 +21,10 @@ public class IndexItem {
 
     public int getId() {
         return id;
+    }
+
+    @Override
+    public int compareTo(IndexItem other) {
+        return this.word.compareTo(other.getWord());
     }
 }
