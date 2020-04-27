@@ -35,18 +35,18 @@ public class Main {
         }
 
         Thread[] threads = new Thread[threadsNum];
-        Result[] results = new Result[threadsNum];
+        List<HashMap<String, List<String>>> results = new LinkedList<>();
         for(int i = 0; i < threadsNum; i++) {
-            Result res = new Result(i);
+            HashMap<String, List<String>> blockIndex = new HashMap<>();
+            results.add(blockIndex);
 
             int startIndexOne = fileSetOne.length/threadsNum*i;
             int endIndexOne = i == threadsNum - 1 ? fileSetOne.length : fileSetOne.length/threadsNum*(i+1);
             int startIndexTwo = fileSetTwo.length/threadsNum*i;
             int endIndexTwo = i == threadsNum - 1 ? fileSetTwo.length : fileSetTwo.length/threadsNum*(i+1);
 
-            IndexBuilder newThread = new IndexBuilder(fileSetOne, fileSetTwo, startIndexOne, endIndexOne, startIndexTwo, endIndexTwo, res, i);
+            IndexBuilder newThread = new IndexBuilder(fileSetOne, fileSetTwo, startIndexOne, endIndexOne, startIndexTwo, endIndexTwo, blockIndex, i);
             threads[i] = newThread;
-            results[i] = res;
             newThread.run();
         }
 
@@ -59,18 +59,16 @@ public class Main {
         }
 
         HashMap<String, PriorityQueue<String>> finalIndex = new HashMap<>();
-        Queue<IndexItem> addingQueue = new PriorityQueue<>();
+        for(HashMap<String, List<String>> blockIndex : results) {
+            String[] words = new String[blockIndex.size()];
+            blockIndex.keySet().toArray(words);
 
-        for(int i = 0; i < threadsNum; i++) {
-            addingQueue.add(results[i].getNextItem());
+            for(String word : words) {
+                addItemToIndex(finalIndex, word, blockIndex.get(word));
+                blockIndex.remove(word);
+            }
         }
 
-        while(addingQueue.size() != 0) {
-            int trace = addItemToIndex(finalIndex, addingQueue.poll());
-
-            IndexItem nextItem = results[trace].getNextItem();
-            if(nextItem != null) addingQueue.add(nextItem);
-        }
         System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
 
         writeIndexToTheFile(finalIndex);
@@ -163,15 +161,13 @@ public class Main {
 
     }
 
-    private static int addItemToIndex(HashMap<String, PriorityQueue<String>> index, IndexItem item) {
-        if(index.containsKey(item.getWord())) {
-            index.get(item.getWord()).addAll(item.getIndex());
+    private static void addItemToIndex(HashMap<String, PriorityQueue<String>> index, String key, List<String> value) {
+        if(index.containsKey(key)) {
+            index.get(key).addAll(value);
         } else {
-            PriorityQueue<String> newBlockIndex = new PriorityQueue<>(item.getIndex());
-            index.put(item.getWord(), newBlockIndex);
+            PriorityQueue<String> wordPositions = new PriorityQueue<>(value);
+            index.put(key, wordPositions);
         }
-
-        return item.getId();
     }
 
     private static void writeIndexToTheFile(Map<String, PriorityQueue<String>> invertedIndex) {
@@ -180,10 +176,13 @@ public class Main {
         String fileName = scan.nextLine();
         try {
             FileWriter fw = new FileWriter("files//" + fileName + ".txt");
-            for(Map.Entry<String, PriorityQueue<String>> couple : invertedIndex.entrySet()) {
-                String line = couple.getKey() + ": ";
-                for(String fName : couple.getValue()) {
-                    line = line + fName + "  ";
+            Queue<String> dictionry = new PriorityQueue<>(invertedIndex.keySet());
+
+            while(dictionry.size() != 0) {
+                String word = dictionry.poll();
+                String line = word + ": ";
+                while(invertedIndex.get(word).size() != 0) {
+                    line = line + invertedIndex.get(word).poll() + "  ";
                 }
                 fw.write(line + "\n");
                 fw.flush();
