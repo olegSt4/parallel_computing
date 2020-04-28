@@ -71,7 +71,7 @@ public class Main {
 
         System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
 
-        writeIndexToTheFile(finalIndex);
+        writeIndexToTheFile(finalIndex, threadsNum);
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
@@ -149,7 +149,7 @@ public class Main {
             System.out.println("Inverted index has been successfully built!");
             System.out.println("The size of inverted index is: " + invertedIndex.size());
 
-            writeIndexToTheFile(invertedIndex);
+            writeIndexToTheFile(invertedIndex, 1);
 
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
@@ -170,16 +170,18 @@ public class Main {
         }
     }
 
-    private static void writeIndexToTheFile(Map<String, PriorityQueue<String>> invertedIndex) {
-        Scanner scan = new Scanner(System.in);
-        System.out.println("Enter the name of the file for saving the index: ");
-        String fileName = scan.nextLine();
+    private static void writeIndexToTheFile(Map<String, PriorityQueue<String>> invertedIndex, int threadsNum) {
+        Calendar cal = new GregorianCalendar();
+        String fileName = threadsNum + "thr_";
+        fileName += cal.get(Calendar.DAY_OF_MONTH) + "_" + (cal.get(Calendar.MONTH) + 1);
+        fileName += "_" + cal.get(Calendar.HOUR_OF_DAY) + "-" + cal.get(Calendar.MINUTE);
+
         try {
             FileWriter fw = new FileWriter("files//" + fileName + ".txt");
-            Queue<String> dictionry = new PriorityQueue<>(invertedIndex.keySet());
+            Queue<String> dictionary = new PriorityQueue<>(invertedIndex.keySet());
 
-            while(dictionry.size() != 0) {
-                String word = dictionry.poll();
+            while(dictionary.size() != 0) {
+                String word = dictionary.poll();
                 String line = word + ": ";
                 while(invertedIndex.get(word).size() != 0) {
                     line = line + invertedIndex.get(word).poll() + "  ";
