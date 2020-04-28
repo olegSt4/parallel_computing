@@ -9,26 +9,25 @@ public class IndexBuilder extends Thread {
     private int endIndexOne;
     private int startIndexTwo;
     private int endIndexTwo;
-    private Result result;
+    private HashMap<String, List<String>> blockIndex;
     private int threadId;
 
-    public IndexBuilder(File[] fso, File[] fst, int sio, int eio, int sit, int eit, Result r, int thi) {
+    public IndexBuilder(File[] fso, File[] fst, int sio, int eio, int sit, int eit, HashMap<String, List<String>> bi, int thi) {
         fileSetOne = fso;
         fileSetTwo = fst;
         starIndexOne = sio;
         endIndexOne = eio;
         startIndexTwo = sit;
         endIndexTwo = eit;
-        result = r;
+        blockIndex = bi;
         threadId = thi;
     }
 
     @Override
     public void run() {
-        HashMap<String, List<String>> invertedIndex = new HashMap<>();
-        Scanner scan;
-
         try {
+            Scanner scan;
+
             for (int i = starIndexOne; i < endIndexOne; i++) {
                 String fileName = fileSetOne[i].getName().replaceAll(".txt", "");
                 scan = new Scanner(fileSetOne[i]);
@@ -37,7 +36,7 @@ public class IndexBuilder extends Thread {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
+                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
@@ -51,12 +50,12 @@ public class IndexBuilder extends Thread {
                             continue;
                         }
 
-                        if(invertedIndex.containsKey(word)) {
-                            invertedIndex.get(word).add("1:" + fileName);
+                        if(blockIndex.containsKey(word)) {
+                            blockIndex.get(word).add("1:" + fileName);
                         } else {
                             List<String> newList = new LinkedList<>();
                             newList.add("1:" + fileName);
-                            invertedIndex.put(word, newList);
+                            blockIndex.put(word, newList);
                         }
                         prev = word;
                     }
@@ -71,7 +70,7 @@ public class IndexBuilder extends Thread {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
+                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
@@ -85,21 +84,19 @@ public class IndexBuilder extends Thread {
                             continue;
                         }
 
-                        if(invertedIndex.containsKey(word)) {
-                            invertedIndex.get(word).add("2:" + fileName);
+                        if(blockIndex.containsKey(word)) {
+                            blockIndex.get(word).add("2:" + fileName);
                         } else {
                             List<String> newList = new LinkedList<>();
                             newList.add("2:" + fileName);
-                            invertedIndex.put(word, newList);
+                            blockIndex.put(word, newList);
                         }
                         prev = word;
                     }
                 }
             }
             System.out.print("Block's InvertedIndex has been successfully built in thread " + threadId);
-            System.out.println(" (The size is: " + invertedIndex.size());
-
-            result.setBlockIndex(invertedIndex);
+            System.out.println(" (The size is: " + blockIndex.size() + ")");
 
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found! (thread " + threadId + ")");

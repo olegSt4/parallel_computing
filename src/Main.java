@@ -92,7 +92,7 @@ public class Main {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
+                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
@@ -126,7 +126,7 @@ public class Main {
                     String input = scan.nextLine();
                     input = input.replaceAll("\\d+", "")
                             .replaceAll("<br />", " ")
-                            .replaceAll("\"|\\.|,|'|-|!|\\?|;|:|\\(|\\)|=|\\+|[|]|\\{|}|<|>|&|\\*|%|$|#|@|\\|/", "")
+                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
                             .replaceAll(" +", " ")
                             .trim()
                             .toLowerCase();
