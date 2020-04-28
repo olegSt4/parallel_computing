@@ -123,7 +123,7 @@ public class Main {
                     while (scan.hasNext()) {
                         String input = scan.nextLine();
                         input = input.replaceAll("<br />", " ")
-                                .replaceAll("[^A-Za-zА-Яа-я\\s]", "")
+                                .replaceAll("[^A-Za-zа-яА-Я\\s]", "")
                                 .replaceAll(" +", " ")
                                 .trim()
                                 .toLowerCase();
@@ -191,6 +191,7 @@ public class Main {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        System.out.println("The inverted index has been successfully written to the file!");
+        System.out.print("The inverted index has been successfully written to the file!  ");
+        System.out.println("(" + fileName + ".txt)");
     }
 }
