@@ -3,22 +3,17 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 public class IndexBuilder extends Thread {
-    private File[] fileSetOne;
-    private File[] fileSetTwo;
-    private int starIndexOne;
-    private int endIndexOne;
-    private int startIndexTwo;
-    private int endIndexTwo;
+    private static final int START = 0;
+    private static final int END = 1;
+
+    private File[][] parts;
+    private int[][] bounds;
     private HashMap<String, List<String>> blockIndex;
     private int threadId;
 
-    public IndexBuilder(File[] fso, File[] fst, int sio, int eio, int sit, int eit, HashMap<String, List<String>> bi, int thi) {
-        fileSetOne = fso;
-        fileSetTwo = fst;
-        starIndexOne = sio;
-        endIndexOne = eio;
-        startIndexTwo = sit;
-        endIndexTwo = eit;
+    public IndexBuilder(File[][] p, int[][] b, HashMap<String, List<String>> bi, int thi) {
+        parts = p;
+        bounds = b;
         blockIndex = bi;
         threadId = thi;
     }
@@ -28,70 +23,38 @@ public class IndexBuilder extends Thread {
         try {
             Scanner scan;
 
-            for (int i = starIndexOne; i < endIndexOne; i++) {
-                String fileName = fileSetOne[i].getName().replaceAll(".txt", "");
-                scan = new Scanner(fileSetOne[i]);
+            for(int i = 0; i < parts.length; i++) {
+                for (int j = bounds[i][START]; j < bounds[i][END]; j++) {
+                    String fileName = parts[i][j].getName().replaceAll(".txt", "");
+                    scan = new Scanner(parts[i][j]);
 
-                while (scan.hasNext()) {
-                    String input = scan.nextLine();
-                    input = input.replaceAll("\\d+", "")
-                            .replaceAll("<br />", " ")
-                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
-                            .replaceAll(" +", " ")
-                            .trim()
-                            .toLowerCase();
+                    while (scan.hasNext()) {
+                        String input = scan.nextLine();
+                        input = input.replaceAll("\\d+", "")
+                                .replaceAll("<br />", " ")
+                                .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
+                                .replaceAll(" +", " ")
+                                .trim()
+                                .toLowerCase();
 
-                    Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
+                        Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
 
-                    String prev = "";
-                    while(words.size() != 0) {
-                        String word = words.poll();
-                        if(word.compareTo(prev) == 0 || word.length() == 1) {
-                            continue;
+                        String prev = "";
+                        while(words.size() != 0) {
+                            String word = words.poll();
+                            if(word.compareTo(prev) == 0 || word.length() == 1) {
+                                continue;
+                            }
+
+                            if(blockIndex.containsKey(word)) {
+                                blockIndex.get(word).add("1:" + fileName);
+                            } else {
+                                List<String> newList = new LinkedList<>();
+                                newList.add("1:" + fileName);
+                                blockIndex.put(word, newList);
+                            }
+                            prev = word;
                         }
-
-                        if(blockIndex.containsKey(word)) {
-                            blockIndex.get(word).add("1:" + fileName);
-                        } else {
-                            List<String> newList = new LinkedList<>();
-                            newList.add("1:" + fileName);
-                            blockIndex.put(word, newList);
-                        }
-                        prev = word;
-                    }
-                }
-            }
-
-            for (int i = startIndexTwo; i < endIndexTwo; i++) {
-                String fileName = fileSetTwo[i].getName().replaceAll(".txt", "");
-                scan = new Scanner(fileSetTwo[i]);
-
-                while (scan.hasNext()) {
-                    String input = scan.nextLine();
-                    input = input.replaceAll("\\d+", "")
-                            .replaceAll("<br />", " ")
-                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
-                            .replaceAll(" +", " ")
-                            .trim()
-                            .toLowerCase();
-
-                    Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
-
-                    String prev = "";
-                    while(words.size() != 0) {
-                        String word = words.poll();
-                        if(word.compareTo(prev) == 0 || word.length() == 1) {
-                            continue;
-                        }
-
-                        if(blockIndex.containsKey(word)) {
-                            blockIndex.get(word).add("2:" + fileName);
-                        } else {
-                            List<String> newList = new LinkedList<>();
-                            newList.add("2:" + fileName);
-                            blockIndex.put(word, newList);
-                        }
-                        prev = word;
                     }
                 }
             }

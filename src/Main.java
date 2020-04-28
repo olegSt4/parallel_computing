@@ -5,13 +5,21 @@ import java.io.IOException;
 import java.util.*;
 
 public class Main {
+    private static int START = 0;
+    private static int END = 1;
 
     public static void main(String[] args) {
-        File firstDir = new File("files//test");
-        File secondDir = new File("files//train");
+        File sourceFolder = new File("files");
 
-        File[] fileSetOne = firstDir.listFiles();
-        File[] fileSetTwo = secondDir.listFiles();
+        if(sourceFolder.listFiles().length == 0) {
+            System.out.println("The source folder is empty!");
+            return;
+        }
+
+        File[][] parts = new File[sourceFolder.listFiles().length][];
+        for(int i = 0; i < sourceFolder.listFiles().length; i++) {
+            parts[i] = sourceFolder.listFiles()[i].listFiles();
+        }
 
         Scanner scan = new Scanner(System.in);
         System.out.println("Enter the num of threads (from 1 to 100) or 0 to exit: ");
@@ -32,7 +40,7 @@ public class Main {
         long startTime = System.currentTimeMillis();
 
         if(threadsNum == 1) {
-            singleThreadProcessing(fileSetOne, fileSetTwo);
+            singleThreadProcessing(parts);
             System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
             return;
         }
@@ -43,12 +51,13 @@ public class Main {
             HashMap<String, List<String>> blockIndex = new HashMap<>();
             results.add(blockIndex);
 
-            int startIndexOne = fileSetOne.length/threadsNum*i;
-            int endIndexOne = i == threadsNum - 1 ? fileSetOne.length : fileSetOne.length/threadsNum*(i+1);
-            int startIndexTwo = fileSetTwo.length/threadsNum*i;
-            int endIndexTwo = i == threadsNum - 1 ? fileSetTwo.length : fileSetTwo.length/threadsNum*(i+1);
+            int[][] bounds = new int[parts.length][2];
+            for(int j = 0; j < bounds.length; j++) {
+                bounds[j][START] = parts[j].length/threadsNum*i;
+                bounds[j][END] = i == threadsNum - 1 ? parts[j].length : parts[j].length/threadsNum*(i + 1);
+            }
 
-            IndexBuilder newThread = new IndexBuilder(fileSetOne, fileSetTwo, startIndexOne, endIndexOne, startIndexTwo, endIndexTwo, blockIndex, i);
+            IndexBuilder newThread = new IndexBuilder(parts, bounds, blockIndex, i);
             threads[i] = newThread;
             newThread.run();
         }
@@ -79,75 +88,43 @@ public class Main {
         System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
-    private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
+    private static void singleThreadProcessing(File[][] parts) {
         Map<String, PriorityQueue<String>> invertedIndex = new HashMap<>();
         Scanner scan;
 
         try {
-            for (File file : fSetFirst) {
-                String fileName = file.getName().replaceAll(".txt", "");
-                scan = new Scanner(file);
+            for(File[] part : parts) {
+                for(File file : part) {
+                    String fileName = file.getName().replaceAll(".txt", "");
+                    scan = new Scanner(file);
 
-                while (scan.hasNext()) {
-                    String input = scan.nextLine();
-                    input = input.replaceAll("\\d+", "")
-                            .replaceAll("<br />", " ")
-                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
-                            .replaceAll(" +", " ")
-                            .trim()
-                            .toLowerCase();
+                    while (scan.hasNext()) {
+                        String input = scan.nextLine();
+                        input = input.replaceAll("\\d+", "")
+                                .replaceAll("<br />", " ")
+                                .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
+                                .replaceAll(" +", " ")
+                                .trim()
+                                .toLowerCase();
 
-                    Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
+                        Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
 
-                    String prev = "";
-                    while(words.size() != 0) {
-                        String word = words.poll();
-                        if(word.compareTo(prev) == 0 || word.length() == 1) {
-                            continue;
+                        String prev = "";
+                        while(words.size() != 0) {
+                            String word = words.poll();
+                            if(word.compareTo(prev) == 0 || word.length() == 1) {
+                                continue;
+                            }
+
+                            if(invertedIndex.containsKey(word)) {
+                                invertedIndex.get(word).add("1:" + fileName);
+                            } else {
+                                PriorityQueue<String> newList = new PriorityQueue<>();
+                                newList.add("1:" + fileName);
+                                invertedIndex.put(word, newList);
+                            }
+                            prev = word;
                         }
-
-                        if(invertedIndex.containsKey(word)) {
-                            invertedIndex.get(word).add("1:" + fileName);
-                        } else {
-                            PriorityQueue<String> newList = new PriorityQueue<>();
-                            newList.add("1:" + fileName);
-                            invertedIndex.put(word, newList);
-                        }
-                        prev = word;
-                    }
-                }
-            }
-
-            for (File file : fSetSecond) {
-                String fileName = file.getName().replaceAll(".txt", "");
-                scan = new Scanner(file);
-
-                while (scan.hasNext()) {
-                    String input = scan.nextLine();
-                    input = input.replaceAll("\\d+", "")
-                            .replaceAll("<br />", " ")
-                            .replaceAll("[^A-Za-zА-Яа-я0-9\\s]", "")
-                            .replaceAll(" +", " ")
-                            .trim()
-                            .toLowerCase();
-
-                    Queue<String> words = new PriorityQueue<>(Arrays.asList(input.split(" ")));
-
-                    String prev = "";
-                    while(words.size() != 0) {
-                        String word = words.poll();
-                        if(word.compareTo(prev) == 0 || word.length() == 1) {
-                            continue;
-                        }
-
-                        if(invertedIndex.containsKey(word)) {
-                            invertedIndex.get(word).add("2:" + fileName);
-                        } else {
-                            PriorityQueue<String> newList = new PriorityQueue<>();
-                            newList.add("2:" + fileName);
-                            invertedIndex.put(word, newList);
-                        }
-                        prev = word;
                     }
                 }
             }
@@ -182,7 +159,7 @@ public class Main {
         fileName += "_" + cal.get(Calendar.HOUR_OF_DAY) + "-" + cal.get(Calendar.MINUTE);
 
         try {
-            FileWriter fw = new FileWriter("files//" + fileName + ".txt");
+            FileWriter fw = new FileWriter(fileName + ".txt");
             Queue<String> dictionary = new PriorityQueue<>(invertedIndex.keySet());
 
             while(dictionary.size() != 0) {
