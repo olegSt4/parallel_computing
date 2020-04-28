@@ -29,8 +29,11 @@ public class Main {
             System.out.println("(Enter the num of threads from 1 to 100 or 0 to exit)");
         }
 
+        long startTime = System.currentTimeMillis();
+
         if(threadsNum == 1) {
             singleThreadProcessing(fileSetOne, fileSetTwo);
+            System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
             return;
         }
 
@@ -72,6 +75,8 @@ public class Main {
         System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
 
         writeIndexToTheFile(finalIndex, threadsNum);
+
+        System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
     private static void singleThreadProcessing(File[] fSetFirst, File[] fSetSecond) {
