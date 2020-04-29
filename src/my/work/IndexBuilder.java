@@ -45,7 +45,7 @@ public class IndexBuilder extends Thread {
                     while (scan.hasNext()) {
                         String input = scan.nextLine();
                         input = input.replaceAll("<br />", " ")
-                                .replaceAll("[^A-Za-zА-Я\\s]", "")
+                                .replaceAll("[^A-Za-z\\s]", "")
                                 .replaceAll(" +", " ")
                                 .trim()
                                 .toLowerCase();

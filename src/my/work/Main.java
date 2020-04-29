@@ -121,7 +121,7 @@ public class Main {
                     while (scan.hasNext()) {
                         String input = scan.nextLine();
                         input = input.replaceAll("<br />", " ")
-                                .replaceAll("[^A-Za-zа-яА-Я\\s]", "")
+                                .replaceAll("[^A-Za-zа-я\\s]", "")
                                 .replaceAll(" +", " ")
                                 .trim()
                                 .toLowerCase();
