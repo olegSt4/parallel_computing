@@ -1,9 +1,6 @@
 package my.work;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -51,6 +48,7 @@ public class Main {
             System.out.println("(Enter the num of threads from 1 to 100 or 0 to exit)");
         }
 
+        System.out.println("Processing...");
         long startTime = System.currentTimeMillis();
 
         if (threadsNum == 1) {
@@ -176,7 +174,7 @@ public class Main {
         fileName += "_" + cal.get(Calendar.HOUR_OF_DAY) + "-" + cal.get(Calendar.MINUTE);
 
         try {
-            FileWriter fw = new FileWriter(fileName + ".txt");
+            BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".txt"));
             Queue<String> dictionary = new PriorityQueue<>(invertedIndex.keySet());
 
             while (dictionary.size() != 0) {
@@ -185,9 +183,9 @@ public class Main {
                 while (invertedIndex.get(word).size() != 0) {
                     line = line + invertedIndex.get(word).poll() + "  ";
                 }
-                fw.write(line + "\n");
-                fw.flush();
+                bw.write(line + "\n");
             }
+            bw.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
