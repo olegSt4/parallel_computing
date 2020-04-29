@@ -46,8 +46,6 @@ public class Main {
         Map<String, PriorityQueue<String>> finalIndex = null;
         if(threadsNum == 1) {
             finalIndex = singleThreadProcessing(parts);
-            System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
-            return;
         } else {
             Thread[] threads = new Thread[threadsNum];
             List<HashMap<String, List<String>>> results = new LinkedList<>();
