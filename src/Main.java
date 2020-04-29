@@ -88,7 +88,7 @@ public class Main {
         System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
     }
 
-    private static void singleThreadProcessing(File[][] parts) {
+    private static Map<String, PriorityQueue<String>> singleThreadProcessing(File[][] parts) {
         Map<String, PriorityQueue<String>> invertedIndex = new HashMap<>();
         Scanner scan;
 
@@ -131,16 +131,10 @@ public class Main {
             System.out.println("Inverted index has been successfully built!");
             System.out.println("The size of inverted index is: " + invertedIndex.size());
 
-            writeIndexToTheFile(invertedIndex, 1);
-
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
-        } catch (IOException ex) {
-            System.out.println("Something wrong with writing the file!");
-            ex.printStackTrace();
         }
-
-
+        return invertedIndex;
     }
 
     private static void addItemToIndex(HashMap<String, PriorityQueue<String>> index, String key, List<String> value) {
