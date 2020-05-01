@@ -42,8 +42,9 @@ public class Main {
         }
 
         long startTime = System.currentTimeMillis();
+        System.out.println("Processing...");
 
-        Map<String, PriorityQueue<String>> finalIndex = null;
+        Map<String, PriorityQueue<String>> finalIndex = new HashMap<>();
         if(threadsNum == 1) {
             finalIndex = singleThreadProcessing(parts);
         } else {
@@ -59,9 +60,9 @@ public class Main {
                     bounds[j][END] = i == threadsNum - 1 ? parts[j].length : parts[j].length/threadsNum*(i + 1);
                 }
 
-                IndexBuilder newThread = new IndexBuilder(parts, bounds, blockIndex, i);
-                threads[i] = newThread;
-                newThread.run();
+                threads[i] = new IndexBuilder(parts, bounds, blockIndex, i);
+                threads[i].start();
+                
             }
 
             try {

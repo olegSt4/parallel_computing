@@ -1,3 +1,5 @@
+package my.work;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -21,6 +23,7 @@ public class IndexBuilder extends Thread {
     @Override
     public void run() {
         try {
+            System.out.println("Thread " + threadId + " started");
             Scanner scan;
 
             for(int i = 0; i < parts.length; i++) {
@@ -47,10 +50,10 @@ public class IndexBuilder extends Thread {
                             }
 
                             if(blockIndex.containsKey(word)) {
-                                blockIndex.get(word).add("1:" + fileName);
+                                blockIndex.get(word).add(i + ":" + fileName);
                             } else {
                                 List<String> newList = new LinkedList<>();
-                                newList.add("1:" + fileName);
+                                newList.add(i + ":" + fileName);
                                 blockIndex.put(word, newList);
                             }
                             prev = word;
