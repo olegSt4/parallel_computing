@@ -1,16 +1,20 @@
 package my.work;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Scanner;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Scanner;
 
 public class Main {
     private static final int START = 0;
@@ -36,7 +40,7 @@ public class Main {
         while (true) {
             String input = scan.next();
             if (input.matches("\\d+")) {
-                if (Integer.valueOf(input) > 0 && Integer.valueOf(input) <= 100) {
+                if (Integer.valueOf(input) >= 0 && Integer.valueOf(input) <= 100) {
                     threadsNum = Integer.valueOf(input);
                     break;
                 } else if (Integer.valueOf(input) == 0) {
@@ -48,75 +52,77 @@ public class Main {
             System.out.println("(Enter the num of threads from 1 to 100 or 0 to exit)");
         }
 
-        System.out.println("Processing...");
         long startTime = System.currentTimeMillis();
+        System.out.println("Processing...");
 
+        Map<String, PriorityQueue<String>> finalIndex = new HashMap<>();
         if (threadsNum == 1) {
-            singleThreadProcessing(parts);
-            System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
-            return;
-        }
+            finalIndex = singleThreadProcessing(parts);
+        } else {
+            IndexBuilder[] indexBuilders = new IndexBuilder[threadsNum];
+            List<HashMap<String, List<String>>> results = new LinkedList<>();
+            for(int i = 0; i < threadsNum; i++) {
+                HashMap<String, List<String>> blockIndex = new HashMap<>();
+                results.add(blockIndex);
 
-        Thread[] threads = new Thread[threadsNum];
-        /** Each thread will save its result of work in such structure */
-        List<HashMap<String, List<String>>> results = new LinkedList<>();
+                int[][] bounds = new int[parts.length][2];
+                for(int j = 0; j < bounds.length; j++) {
+                    bounds[j][START] = parts[j].length/threadsNum*i;
+                    bounds[j][END] = i == threadsNum - 1 ? parts[j].length : parts[j].length/threadsNum*(i + 1);
+                }
 
-        for (int i = 0; i < threadsNum; i++) {
-            HashMap<String, List<String>> blockIndex = new HashMap<>();
-            results.add(blockIndex);
-
-            int[][] bounds = new int[parts.length][2];
-            for (int j = 0; j < bounds.length; j++) {
-                bounds[j][START] = parts[j].length/threadsNum*i;
-                bounds[j][END] = i == threadsNum - 1 ? parts[j].length : parts[j].length/threadsNum*(i + 1);
+                indexBuilders[i] = new IndexBuilder(parts, bounds, blockIndex, i);
+                indexBuilders[i].start();
             }
 
-            IndexBuilder newThread = new IndexBuilder(parts, bounds, blockIndex, i);
-            threads[i] = newThread;
-            newThread.run();
-        }
-
-        try {
-            for (int i = 0; i < threadsNum; i++) {
-                threads[i].join();
+            try {
+                for (int i = 0; i < threadsNum; i++) {
+                    indexBuilders[i].join();
+                }
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
             }
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-        }
 
-        /** The results of all threads are summarized into this variable */
-        HashMap<String, PriorityQueue<String>> finalIndex = new HashMap<>();
+            for (HashMap<String, List<String>> blockIndex : results) {
+                String[] words = new String[blockIndex.size()];
+                blockIndex.keySet().toArray(words);
 
-        for (HashMap<String, List<String>> blockIndex : results) {
-            String[] words = new String[blockIndex.size()];
-            blockIndex.keySet().toArray(words);
-
-            for (String word : words) {
-                addItemToIndex(finalIndex, word, blockIndex.get(word));
-                blockIndex.remove(word);
+                for (String word : words) {
+                    addItemToIndex(finalIndex, word, blockIndex.get(word));
+                    blockIndex.remove(word);
+                }
             }
         }
-
         System.out.println("Final index has been successfully built! (Size is " + finalIndex.size() + ")");
-
-        writeIndexToFile(finalIndex, threadsNum);
-
         System.out.println("Time: " + (System.currentTimeMillis() - startTime) + "ms");
+
+        System.out.println("Do you want to save the index to the file?");
+
+        String input;
+        while (true) {
+            System.out.println("(Write \"yes\" or \"no\")");
+            input = scan.next();
+            if (input.toLowerCase().compareTo("yes") == 0) {
+                writeIndexToTheFile(finalIndex, threadsNum);
+                break;
+            } else if (input.toLowerCase().compareTo("no") == 0) {
+                break;
+            }
+        }
     }
 
     /**
-     * This method performs building inverted index in series
-     * The input receives a set of file arrays by which the index is built
+     * This function is used to build invertedIndex in single-thread mode
      */
-    private static void singleThreadProcessing(File[][] parts) {
+    private static Map<String, PriorityQueue<String>> singleThreadProcessing(File[][] parts) {
         Map<String, PriorityQueue<String>> invertedIndex = new HashMap<>();
         Scanner scan;
 
         try {
-            for (File[] part : parts) {
-                for (File file : part) {
-                    String fileName = file.getName().replaceAll(".txt", "");
-                    scan = new Scanner(file);
+            for (int partNum = 0; partNum < parts.length; partNum++) {
+                for (int fileNum = 0; fileNum < parts[partNum].length; fileNum++) {
+                    String fileName = parts[partNum][fileNum].getName().replaceAll(".txt", "");
+                    scan = new Scanner(parts[partNum][fileNum]);
 
                     while (scan.hasNext()) {
                         String input = scan.nextLine();
@@ -136,28 +142,24 @@ public class Main {
                             }
 
                             if (invertedIndex.containsKey(word)) {
-                                invertedIndex.get(word).add("1:" + fileName);
+                                invertedIndex.get(word).add(partNum + ":" + fileName);
                             } else {
-                                PriorityQueue<String> newList = new PriorityQueue<>();
-                                newList.add("1:" + fileName);
-                                invertedIndex.put(word, newList);
+                                PriorityQueue<String> wordPositions = new PriorityQueue<>();
+                                wordPositions.add(partNum + ":" + fileName);
+                                invertedIndex.put(word, wordPositions);
                             }
                             prev = word;
                         }
                     }
                 }
             }
-            System.out.println("Inverted index has been successfully built!");
-            System.out.println("The size of inverted index is: " + invertedIndex.size());
-
-            writeIndexToFile(invertedIndex, 1);
-
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found!");
         }
+        return invertedIndex;
     }
 
-    private static void addItemToIndex(HashMap<String, PriorityQueue<String>> index, String key, List<String> value) {
+    private static void addItemToIndex(Map<String, PriorityQueue<String>> index, String key, List<String> value) {
         if (index.containsKey(key)) {
             index.get(key).addAll(value);
         } else {
@@ -166,15 +168,14 @@ public class Main {
         }
     }
 
-    private static void writeIndexToFile(Map<String, PriorityQueue<String>> invertedIndex, int threadsNum) {
-        Calendar cal = new GregorianCalendar();
-
+    private static void writeIndexToTheFile(Map<String, PriorityQueue<String>> invertedIndex, int threadsNum) {
+        Calendar calendar = new GregorianCalendar();
         String fileName = threadsNum + "thr_";
-        fileName += cal.get(Calendar.DAY_OF_MONTH) + "_" + (cal.get(Calendar.MONTH) + 1);
-        fileName += "_" + cal.get(Calendar.HOUR_OF_DAY) + "-" + cal.get(Calendar.MINUTE);
+        fileName += calendar.get(Calendar.DAY_OF_MONTH) + "_" + (calendar.get(Calendar.MONTH) + 1);
+        fileName += "_" + calendar.get(Calendar.HOUR_OF_DAY) + "-" + calendar.get(Calendar.MINUTE);
 
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(fileName + ".txt"));
+            BufferedWriter buffWr = new BufferedWriter(new FileWriter(fileName + ".txt"));
             Queue<String> dictionary = new PriorityQueue<>(invertedIndex.keySet());
 
             while (dictionary.size() != 0) {
@@ -183,13 +184,11 @@ public class Main {
                 while (invertedIndex.get(word).size() != 0) {
                     line = line + invertedIndex.get(word).poll() + "  ";
                 }
-                bw.write(line + "\n");
+                buffWr.write(line + "\n");
             }
-            bw.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        System.out.print("The inverted index has been successfully written to the file!  ");
-        System.out.println("(" + fileName + ".txt)");
+        System.out.println("The inverted index has been successfully written to the file!");
     }
 }

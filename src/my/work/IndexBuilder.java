@@ -4,43 +4,47 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Scanner;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
-import java.util.Scanner;
 
 /**
- * This class is used to organize parallel building of the inverted index
- * It this program it processes particular part of files in each directory, that is in source-directory
+ * This class describes the work of one thread in terms of multi-thread processing
  */
 public class IndexBuilder extends Thread {
     private static final int START = 0;
     private static final int END = 1;
 
-    /** Set of file arrays to be processed*/
+    /** All files*/
     private File[][] parts;
-    /** boundaries (beginning and end) of the processing area of each set */
+
+    /** Special boundaries of corresponding parts for this thread*/
     private int[][] bounds;
+
+    /** The result of thread's work will be written here*/
     private HashMap<String, List<String>> blockIndex;
+
     private int threadId;
 
-    public IndexBuilder(File[][] parts, int[][] bounds, HashMap<String, List<String>> blockIndexi, int threadIdi) {
+    public IndexBuilder(File[][] parts, int[][] bounds, HashMap<String, List<String>> blockIndex, int threadId) {
         this.parts = parts;
         this.bounds = bounds;
-        this.blockIndex = blockIndexi;
-        this.threadId = threadIdi;
+        this.blockIndex = blockIndex;
+        this.threadId = threadId;
     }
 
     @Override
     public void run() {
         try {
+            System.out.println("Thread " + threadId + " started");
             Scanner scan;
 
-            for (int i = 0; i < parts.length; i++) {
-                for (int j = bounds[i][START]; j < bounds[i][END]; j++) {
-                    String fileName = parts[i][j].getName().replaceAll(".txt", "");
-                    scan = new Scanner(parts[i][j]);
+            for (int partNum = 0; partNum < parts.length; partNum++) {
+                for (int fileNum = bounds[partNum][START]; fileNum < bounds[partNum][END]; fileNum++) {
+                    String fileName = parts[partNum][fileNum].getName().replaceAll(".txt", "");
+                    scan = new Scanner(parts[partNum][fileNum]);
 
                     while (scan.hasNext()) {
                         String input = scan.nextLine();
@@ -60,11 +64,11 @@ public class IndexBuilder extends Thread {
                             }
 
                             if (blockIndex.containsKey(word)) {
-                                blockIndex.get(word).add("1:" + fileName);
+                                blockIndex.get(word).add(partNum + ":" + fileName);
                             } else {
-                                List<String> newList = new LinkedList<>();
-                                newList.add("1:" + fileName);
-                                blockIndex.put(word, newList);
+                                List<String> wordPositions = new LinkedList<>();
+                                wordPositions.add(partNum + ":" + fileName);
+                                blockIndex.put(word, wordPositions);
                             }
                             prev = word;
                         }
@@ -73,7 +77,6 @@ public class IndexBuilder extends Thread {
             }
             System.out.print("Block's InvertedIndex has been successfully built in thread " + threadId);
             System.out.println(" (The size is: " + blockIndex.size() + ")");
-
         } catch (FileNotFoundException ex) {
             System.out.println("On of the files is not found! (thread " + threadId + ")");
         }
