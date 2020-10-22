@@ -1,4 +1,4 @@
-# course_work_parallel_computing
+parallel_computing
 Programm builds simple inverted index of .txt files in single-thread mode or in multi-thread mode (to 100 threads)
 
 ## Prerequisites
